@@ -1,0 +1,42 @@
+name: CI - Build and Test
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Build and run everything. continue-on-error lets us get to the
+      # result file creation step even if the tests fail.
+      - name: Build and run Docker Compose
+        id: compose
+        run: docker compose up --build --abort-on-container-exit
+        continue-on-error: true
+
+      # Create succeeded or fail file based on the test outcome
+      - name: Create result file
+        if: always()
+        run: |
+          mkdir -p results
+          if [ "${{ steps.compose.outcome }}" == "success" ]; then
+            touch results/succeeded
+            echo "Tests PASSED"
+          else
+            touch results/fail
+            echo "Tests FAILED"
+          fi
+
+      - name: Upload test result artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-result
+          path: results/

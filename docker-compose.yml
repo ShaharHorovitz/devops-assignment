@@ -1,0 +1,19 @@
+# Usage: docker compose up --build --abort-on-container-exit
+
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    # expose (not ports) - only accessible within the docker network
+    expose:
+      - "8080"
+      - "8081"
+      - "8443"
+
+  tests:
+    build:
+      context: ./tests
+      dockerfile: Dockerfile
+    depends_on:
+      - nginx
